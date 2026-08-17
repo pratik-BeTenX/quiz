@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice AI Quiz — Daily Drop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Nunito:wght@400;600;700;800&family=Rubik+Spray+Paint&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7EFE2;          /* warm cream */
+    --card:#FFFBF3;
+    --line:#E7D8C4;
+    --ink:#4A3830;         /* deep cocoa */
+    --dim:#A08B79;
+    --clay:#B4785B;        /* soft terracotta */
+    --clay-deep:#9A5F44;
+    --ok:#7FA37A;          /* sage */
+    --ok-bg:#EEF3EA;
+    --bad:#C97B7B;         /* dusty rose */
+    --bad-bg:#F7EAEA;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Nunito',system-ui,sans-serif;
+    display:flex;justify-content:center;
+    padding:22px 14px 44px;
+    min-height:100vh;
+  }
+  .app{width:100%;max-width:480px}
+
+  /* ---------- header ---------- */
+  header{text-align:center;margin-bottom:16px}
+  .eyebrow{
+    font-size:.66rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--clay);margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:900;
+    font-size:2.1rem;line-height:1.05;letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  h1 .accent{color:var(--clay)}
+  .sub{font-size:.85rem;color:var(--dim);margin-top:6px;font-weight:600}
+  .orn{color:var(--clay);font-size:.9rem;margin-top:8px;letter-spacing:.5em}
+
+  /* ---------- progress dots ---------- */
+  .dots{display:flex;justify-content:center;gap:8px;margin:16px 0 18px}
+  .dots .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--line);transition:all .3s ease;
+  }
+  .dots .dot.current{background:var(--clay);transform:scale(1.35)}
+  .dots .dot.ok{background:var(--ok)}
+  .dots .dot.bad{background:var(--bad)}
+
+  /* ---------- card ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:24px 20px;
+    box-shadow:0 6px 24px rgba(122,90,64,.08);
+  }
+  .qmeta{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:.68rem;font-weight:800;color:var(--dim);
+    letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px;
+  }
+  .qtext{
+    font-family:'Fraunces',serif;font-weight:700;
+    font-size:1.28rem;line-height:1.35;min-height:88px;margin-bottom:16px;
+    color:var(--ink);
+  }
+  .qtext .caret{display:inline-block;width:3px;height:1em;background:var(--clay);vertical-align:-2px;animation:blink 1s steps(1) infinite;margin-left:2px;border-radius:2px}
+  @keyframes blink{50%{opacity:.1}}
+
+  .opts{display:grid;gap:10px}
+  .opt{
+    text-align:left;font:inherit;color:var(--ink);
+    background:var(--bg);border:1.5px solid var(--line);border-radius:14px;
+    padding:14px 15px;cursor:pointer;line-height:1.45;font-size:.95rem;font-weight:600;
+    transition:border-color .15s ease, transform .1s ease, background .15s ease;
+    display:flex;gap:11px;align-items:flex-start;
+  }
+  .opt:hover{border-color:var(--clay);background:#FBF3E7}
+  .opt:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+  .opt:active{transform:scale(.99)}
+  .opt .key{
+    font-size:.72rem;font-weight:800;color:var(--clay);
+    background:#F2E4D4;border-radius:7px;padding:2px 7px;margin-top:2px;flex-shrink:0;
+  }
+  .opt.correct{background:var(--ok-bg);border-color:var(--ok)}
+  .opt.correct .key{color:#fff;background:var(--ok)}
+  .opt.wrong{background:var(--bad-bg);border-color:var(--bad)}
+  .opt.wrong .key{color:#fff;background:var(--bad)}
+  .opt:disabled{cursor:default}
+  .opt:disabled:not(.correct):not(.wrong){opacity:.45}
+  .opt:disabled:hover{border-color:var(--line);background:var(--bg)}
+  .opt.correct:disabled:hover{border-color:var(--ok);background:var(--ok-bg)}
+  .opt.wrong:disabled:hover{border-color:var(--bad);background:var(--bad-bg)}
+
+  .explain{
+    margin-top:14px;border-left:3px solid var(--clay);
+    background:#FBF3E7;border-radius:0 12px 12px 0;
+    padding:13px 15px;font-size:.88rem;line-height:1.55;color:#6B5647;
+    display:none;
+  }
+  .explain b{color:var(--clay-deep)}
+  .explain .lat{display:block;margin-top:8px;font-size:.72rem;font-weight:700;color:var(--dim)}
+
+  .next{
+    margin-top:16px;width:100%;
+    font-family:'Fraunces',serif;font-weight:900;font-size:1.02rem;color:#FFFBF3;
+    background:var(--clay);
+    border:none;border-radius:14px;padding:15px;cursor:pointer;
+    display:none;transition:background .15s ease;
+  }
+  .next:hover{background:var(--clay-deep)}
+  .next:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+  /* ---------- score ---------- */
+  .score{text-align:center;display:none}
+  .score .bloom{font-size:2.2rem;margin-bottom:4px}
+  .score h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.6rem;margin-bottom:4px}
+  .score .big{
+    font-family:'Fraunces',serif;font-weight:900;font-size:3rem;
+    color:var(--clay);margin:8px 0 2px;
+  }
+  .score .grade{color:var(--dim);font-size:.92rem;font-weight:700;margin-bottom:18px;line-height:1.5}
+  .score .stats{
+    font-size:.8rem;font-weight:600;color:var(--dim);
+    border-top:1.5px dashed var(--line);border-bottom:1.5px dashed var(--line);
+    padding:12px 0;margin-bottom:18px;line-height:1.9;
+  }
+  .btnrow{display:grid;gap:10px}
+  .ghost{
+    font-family:'Nunito',sans-serif;font-weight:800;color:var(--clay);background:none;
+    border:1.5px solid var(--clay);border-radius:14px;padding:14px;cursor:pointer;font-size:.95rem;
+  }
+  .ghost:hover{background:#FBF3E7}
+
+  footer{
+    margin-top:18px;text-align:center;
+    font-size:.68rem;font-weight:700;color:#BCA893;letter-spacing:.14em;text-transform:uppercase;
+  }
+
+  /* ---------- draggable stickers ---------- */
+  .sticker{
+    position:fixed;z-index:5;
+    cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+    filter:drop-shadow(0 6px 12px rgba(122,90,64,.18));
+  }
+  .sticker:active{cursor:grabbing}
+  .sticker.dragging{z-index:60;filter:drop-shadow(0 14px 22px rgba(122,90,64,.3))}
+  .sticker .inner{
+    display:inline-block;
+    animation:floaty var(--dur,5s) ease-in-out var(--del,0s) infinite alternate;
+  }
+  .sticker.dragging .inner{animation-play-state:paused}
+  @keyframes floaty{
+    from{transform:translateY(0) rotate(var(--rot,-4deg))}
+    to{transform:translateY(-14px) rotate(calc(var(--rot,-4deg) + 5deg))}
+  }
+  /* emoji stickers: die-cut look */
+  .st-emoji .inner{
+    font-size:2.3rem;line-height:1;
+    background:#FFFDF8;border:3px solid #fff;border-radius:22px;
+    padding:12px 14px;
+    box-shadow:0 0 0 1.5px var(--line) inset;
+  }
+  .st-emoji.sm .inner{font-size:1.7rem;padding:9px 11px;border-radius:18px}
+  /* graffiti text stickers */
+  .st-tag .inner{
+    font-family:'Rubik Spray Paint','Permanent Marker',cursive;
+    font-size:1.5rem;line-height:1.1;letter-spacing:.02em;
+    padding:10px 16px;border-radius:14px;
+    border:3px solid #fff;
+    text-shadow:2px 2px 0 rgba(0,0,0,.08);
+  }
+  .st-tag.sm .inner{font-size:1.05rem;padding:7px 12px}
+  .st-marker .inner{font-family:'Permanent Marker',cursive}
+  .tag-clay .inner{background:var(--clay);color:#FFF6E9}
+  .tag-sage .inner{background:var(--ok);color:#F4F8F1}
+  .tag-rose .inner{background:var(--bad);color:#FFF4F2}
+  .tag-cocoa .inner{background:var(--ink);color:#F7EFE2}
+  .tag-cream .inner{background:#FFFDF8;color:var(--clay-deep);box-shadow:0 0 0 1.5px var(--line) inset}
+
+  @media (max-width:920px){.sticker{display:none}}
+  @media (prefers-reduced-motion: reduce){
+    .qtext .caret{animation:none}
+    .sticker .inner{animation:none}
+  }
+
+  /* ---------- mic cursor ---------- */
+  body,button,.opt,.dot,.flip,.next,.ghost,.sticker{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 24 24'%3E%3Cpath d='M12 14.5a3 3 0 0 0 3-3v-5a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z' fill='%23B4785B' stroke='%23FFFBF3' stroke-width='1.1'/%3E%3Cpath d='M17.5 11.5a5.5 5.5 0 0 1-11 0M12 17v3.5M9 20.5h6' fill='none' stroke='%23B4785B' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E") 6 2, auto}
+  .sticker:active{cursor:grabbing}
+  /* ---------- note trail ---------- */
+  .note-trail{position:fixed;pointer-events:none;z-index:999;color:#B4785B;will-change:transform,opacity;user-select:none}
+</style>
+</head>
+<body>
+<!-- draggable stickers (desktop / fullscreen) -->
+<div class="sticker st-emoji"        style="left:6%;  top:10%; --rot:-6deg; --dur:5.2s"><span class="inner">🎙️</span></div>
+<div class="sticker st-emoji sm"     style="left:13%; top:38%; --rot:5deg;  --dur:6.1s; --del:.4s"><span class="inner">🔊</span></div>
+<div class="sticker st-emoji"        style="left:7%;  top:66%; --rot:3deg;  --dur:4.8s; --del:.8s"><span class="inner">🤖</span></div>
+<div class="sticker st-emoji sm"     style="right:8%; top:14%; --rot:7deg;  --dur:5.6s; --del:.2s"><span class="inner">🎧</span></div>
+<div class="sticker st-emoji"        style="right:14%;top:44%; --rot:-5deg; --dur:6.4s; --del:.6s"><span class="inner">📞</span></div>
+<div class="sticker st-emoji sm"     style="right:6%; top:72%; --rot:4deg;  --dur:5s;   --del:1s"><span class="inner">🧠</span></div>
+
+<div class="sticker st-tag tag-clay"      style="left:4%;  top:26%; --rot:-8deg; --dur:5.4s; --del:.3s"><span class="inner">VOICE AI</span></div>
+<div class="sticker st-tag sm tag-sage st-marker"  style="left:15%; top:54%; --rot:6deg;  --dur:6s;   --del:.7s"><span class="inner">listen · think · speak</span></div>
+<div class="sticker st-tag sm tag-cocoa"  style="left:5%;  top:84%; --rot:-4deg; --dur:5.8s; --del:.1s"><span class="inner">STT → TTS</span></div>
+<div class="sticker st-tag sm tag-rose st-marker"  style="right:5%; top:30%; --rot:8deg;  --dur:5.2s; --del:.5s"><span class="inner">barge-in!</span></div>
+<div class="sticker st-tag tag-cream"     style="right:10%;top:58%; --rot:-7deg; --dur:6.2s; --del:.9s"><span class="inner">Gemini Live</span></div>
+<div class="sticker st-tag sm tag-clay st-marker"  style="right:12%;top:86%; --rot:5deg;  --dur:5.5s; --del:.2s"><span class="inner">reply in &lt;1 sec ⚡</span></div>
+
+<div class="app">
+  <header>
+    <div class="eyebrow">Daily Drop · Quiz</div>
+    <h1>Do you speak<br><span class="accent">Voice AI?</span></h1>
+    <div class="sub">10 gentle questions · no jargon needed</div>
+    <div class="orn">❀ ❀ ❀</div>
+  </header>
+
+  <div class="dots" id="dots" aria-hidden="true"></div>
+
+  <main class="card" id="card">
+    <div class="qmeta"><span id="qnum">Question 1 of 10</span><span id="qtopic"></span></div>
+    <p class="qtext" id="qtext" aria-live="polite"></p>
+    <div class="opts" id="opts"></div>
+    <div class="explain" id="explain"></div>
+    <button class="next" id="next">Next question</button>
+
+    <div class="score" id="score">
+      <div class="bloom">🌸</div>
+      <h2>All done!</h2>
+      <div class="big" id="finalScore">0/10</div>
+      <div class="grade" id="grade"></div>
+      <div class="stats" id="stats"></div>
+      <div class="btnrow">
+        <button class="next" id="share" style="display:block">Copy my result</button>
+        <button class="ghost" id="retry">Take it again</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>listen · think · speak</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    topic:"basics",
+    q:"What is a voice agent?",
+    opts:[
+      "An app that only plays music",
+      "An AI you can talk to, that listens and talks back",
+      "A person answering phone calls",
+      "A tool that edits voice recordings"
+    ],
+    a:1,
+    ex:"A <b>voice agent</b> is an AI you have a conversation with — like a smart assistant that can answer calls, book appointments, or help customers, all by talking."
+  },
+  {
+    topic:"examples",
+    q:"Which of these have you probably already used as voice AI?",
+    opts:[
+      "Google Assistant, Siri, or Alexa",
+      "Microsoft Excel",
+      "Google Chrome",
+      "A calculator app"
+    ],
+    a:0,
+    ex:"Yes! <b>Siri, Alexa, and Google Assistant</b> are all voice AI. The new generation (built with tools like Gemini Live) is just much smarter and more natural."
+  },
+  {
+    topic:"how it works",
+    q:"A voice agent works in 3 simple steps. What's the right order?",
+    opts:[
+      "Speak → Listen → Think",
+      "Think → Speak → Listen",
+      "Listen → Think → Speak",
+      "Speak → Think → Listen"
+    ],
+    a:2,
+    ex:"It <b>listens</b> to your voice, <b>thinks</b> using AI, then <b>speaks</b> the answer back. In tech terms: Speech-to-Text → AI model → Text-to-Speech."
+  },
+  {
+    topic:"how it works",
+    q:"What does 'Speech-to-Text' (STT) do?",
+    opts:[
+      "Turns your spoken words into written text",
+      "Turns text into a robot voice",
+      "Translates English to Hindi",
+      "Records and saves your calls"
+    ],
+    a:0,
+    ex:"<b>STT is the 'ears'</b> of a voice agent — it converts what you say into text so the AI can understand it. YouTube auto-captions use the same idea!"
+  },
+  {
+    topic:"how it works",
+    q:"And 'Text-to-Speech' (TTS) does the opposite. What is that?",
+    opts:[
+      "It reads your messages silently",
+      "It turns written text into a natural spoken voice",
+      "It types what you speak",
+      "It makes the AI think faster"
+    ],
+    a:1,
+    ex:"<b>TTS is the 'mouth'</b> — it converts the AI's text reply into a voice you hear. Modern TTS voices sound so human it's hard to tell the difference."
+  },
+  {
+    topic:"speed",
+    q:"Why does a voice agent need to reply FAST?",
+    opts:[
+      "So it uses less internet data",
+      "Long pauses feel awkward and robotic in a conversation",
+      "Fast replies are cheaper to type",
+      "Speed doesn't really matter"
+    ],
+    a:1,
+    ex:"In a real chat, humans reply within a second. If an AI takes 3–4 seconds, you start saying <b>'hello…? are you there?'</b> That delay is called <b>latency</b>, and builders work hard to keep it tiny."
+  },
+  {
+    topic:"conversation",
+    q:"You interrupt a good voice agent while it's speaking. What should it do?",
+    opts:[
+      "Keep talking until it finishes",
+      "Hang up the call",
+      "Stop, listen to you, and respond",
+      "Speak louder than you"
+    ],
+    a:2,
+    ex:"Just like a polite human! This ability is called <b>barge-in</b> — the agent stops mid-sentence when you interrupt. Bad bots that keep monologuing feel instantly robotic."
+  },
+  {
+    topic:"multimodal",
+    q:"'Multimodal AI' means an AI that can understand…",
+    opts:[
+      "Only text",
+      "Only voice",
+      "Text, images, voice, AND video together",
+      "Multiple languages only"
+    ],
+    a:2,
+    ex:"<b>Multi = many, modal = types of input.</b> Gemini is multimodal — you can show it a photo, talk to it, or share your screen, and it understands all of it together."
+  },
+  {
+    topic:"gemini live",
+    q:"What makes Gemini Live special compared to normal chatbots?",
+    opts:[
+      "You can talk to it naturally and even share your camera or screen",
+      "It only works on expensive laptops",
+      "It can only answer in English",
+      "It replies with text only"
+    ],
+    a:0,
+    ex:"<b>Gemini Live</b> is a real-time conversation — talk naturally, interrupt anytime, point your camera at something and ask 'what is this?'. It's voice + vision working live."
+  },
+  {
+    topic:"real power",
+    q:"Talking is nice, but the REAL power of voice agents is that they can…",
+    opts:[
+      "Tell better jokes",
+      "Actually DO things — book appointments, check orders, send messages",
+      "Sound exactly like celebrities",
+      "Work without any internet"
+    ],
+    a:1,
+    ex:"This is called <b>tool use</b> (or function calling). When you say 'book me a table at 8', the agent connects to real apps and actually makes it happen — not just talks about it."
+  }
+];
+
+const GRADES = [
+  {min:9, label:"Fluent in Voice AI 🌿 You're ready for tomorrow's drop — we go deeper."},
+  {min:7, label:"Nearly fluent! Just a couple of concepts to revisit."},
+  {min:4, label:"Good start 🌱 Replay today's drop once and try again."},
+  {min:0, label:"No stress — everyone starts somewhere. Retake it, it's how you learn."}
+];
+
+const dots = document.getElementById('dots');
+const qnum = document.getElementById('qnum');
+const qtopic = document.getElementById('qtopic');
+const qtext = document.getElementById('qtext');
+const optsEl = document.getElementById('opts');
+const explainEl = document.getElementById('explain');
+const nextBtn = document.getElementById('next');
+const scoreEl = document.getElementById('score');
+const KEYS = ['A','B','C','D'];
+
+let i = 0, correct = 0, results = [], qStart = 0, typer = null;
+
+QUESTIONS.forEach(() => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  dots.appendChild(d);
+});
+
+function typeQuestion(text){
+  clearInterval(typer);
+  qtext.innerHTML = '<span class="caret"></span>';
+  let n = 0;
+  typer = setInterval(() => {
+    n += 2;
+    qtext.innerHTML = text.slice(0, n) + '<span class="caret"></span>';
+    if (n >= text.length){
+      clearInterval(typer);
+      qtext.textContent = text;
+    }
+  }, 16);
+}
+
+function render(){
+  const Q = QUESTIONS[i];
+  document.querySelectorAll('.dots .dot').forEach((d, k) => {
+    d.className = 'dot' + (k === i ? ' current' : results[k] === true ? ' ok' : results[k] === false ? ' bad' : '');
+  });
+  qnum.textContent = `Question ${i+1} of ${QUESTIONS.length}`;
+  qtopic.textContent = Q.topic;
+  typeQuestion(Q.q);
+  explainEl.style.display = 'none';
+  nextBtn.style.display = 'none';
+  optsEl.innerHTML = '';
+  Q.opts.forEach((o, k) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = `<span class="key">${KEYS[k]}</span><span>${o}</span>`;
+    b.addEventListener('click', () => answer(k));
+    optsEl.appendChild(b);
+  });
+  qStart = performance.now();
+}
+
+function answer(k){
+  const Q = QUESTIONS[i];
+  const secs = ((performance.now() - qStart) / 1000).toFixed(1);
+  const ok = k === Q.a;
+  results[i] = ok;
+  if (ok) correct++;
+  [...optsEl.children].forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === Q.a) b.classList.add('correct');
+    else if (idx === k && !ok) b.classList.add('wrong');
+  });
+  explainEl.innerHTML = Q.ex + `<span class="lat">you answered in ${secs}s ${secs < 5 ? '— nice and quick ✿' : '— a voice agent would call that a long pause 😄'}</span>`;
+  explainEl.style.display = 'block';
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = i === QUESTIONS.length - 1 ? 'See my score' : 'Next question';
+  document.querySelectorAll('.dots .dot')[i].className = 'dot ' + (ok ? 'ok' : 'bad');
+  nextBtn.focus();
+}
+
+nextBtn.addEventListener('click', () => {
+  i++;
+  if (i < QUESTIONS.length) render();
+  else showScore();
+});
+
+function showScore(){
+  qnum.parentElement.style.display = 'none';
+  qtext.style.display = 'none';
+  optsEl.style.display = 'none';
+  explainEl.style.display = 'none';
+  nextBtn.style.display = 'none';
+  document.querySelectorAll('.dots .dot').forEach((d, k) => {
+    d.className = 'dot ' + (results[k] ? 'ok' : 'bad');
+  });
+  const grade = GRADES.find(g => correct >= g.min).label;
+  document.getElementById('finalScore').textContent = `${correct}/${QUESTIONS.length}`;
+  document.getElementById('grade').textContent = grade;
+  const missed = QUESTIONS.filter((_, k) => !results[k]).map(q => q.topic);
+  document.getElementById('stats').innerHTML =
+    `${results.filter(Boolean).length} correct · ${results.filter(r => r === false).length} to review<br>` +
+    (missed.length ? 'revisit: ' + [...new Set(missed)].join(' · ') : 'perfect run — nothing to review ❀');
+  scoreEl.style.display = 'block';
+
+  document.getElementById('share').onclick = function(){
+    const blocks = results.map(r => r ? '🟢' : '🟠').join('');
+    const text = `Voice AI Quiz — ${correct}/${QUESTIONS.length}\n${blocks}\n${grade}`;
+    navigator.clipboard.writeText(text).then(() => {
+      this.textContent = 'Copied ✓';
+      setTimeout(() => this.textContent = 'Copy my result', 1600);
+    }).catch(() => { this.textContent = text; });
+  };
+  document.getElementById('retry').onclick = () => {
+    i = 0; correct = 0; results = [];
+    scoreEl.style.display = 'none';
+    qnum.parentElement.style.display = 'flex';
+    qtext.style.display = 'block';
+    optsEl.style.display = 'grid';
+    render();
+  };
+}
+
+render();
+
+/* ---------- sticker dragging ---------- */
+document.querySelectorAll('.sticker').forEach(st => {
+  let sx = 0, sy = 0, ox = 0, oy = 0;
+
+  st.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    st.setPointerCapture(e.pointerId);
+    st.classList.add('dragging');
+    const r = st.getBoundingClientRect();
+    // switch from % positioning to px so dragging is stable
+    st.style.left = r.left + 'px';
+    st.style.top = r.top + 'px';
+    st.style.right = 'auto';
+    sx = e.clientX; sy = e.clientY;
+    ox = r.left; oy = r.top;
+  });
+
+  st.addEventListener('pointermove', e => {
+    if (!st.classList.contains('dragging')) return;
+    let nx = ox + (e.clientX - sx);
+    let ny = oy + (e.clientY - sy);
+    // keep at least a corner on screen
+    nx = Math.max(-40, Math.min(window.innerWidth - 40, nx));
+    ny = Math.max(-20, Math.min(window.innerHeight - 40, ny));
+    st.style.left = nx + 'px';
+    st.style.top = ny + 'px';
+  });
+
+  const drop = e => {
+    st.classList.remove('dragging');
+    if (st.hasPointerCapture && st.hasPointerCapture(e.pointerId)) {
+      st.releasePointerCapture(e.pointerId);
+    }
+  };
+  st.addEventListener('pointerup', drop);
+  st.addEventListener('pointercancel', drop);
+});
+
+/* ---------- music note trail ---------- */
+(function(){
+  var NOTES=['\u266a','\u266b','\u266c','\u2669'],last=0,ni=0;
+  addEventListener('pointermove',function(e){
+    var now=performance.now();
+    if(now-last<62)return;
+    last=now;
+    var n=document.createElement('span');
+    n.className='note-trail';
+    n.textContent=NOTES[ni++%NOTES.length];
+    n.style.left=(e.clientX-4)+'px';
+    n.style.top=(e.clientY-6)+'px';
+    n.style.fontSize=(0.8+Math.random()*0.55).toFixed(2)+'rem';
+    document.body.appendChild(n);
+    var dx=(Math.random()-0.5)*26, rot=(Math.random()-0.5)*44;
+    n.animate([
+      {transform:'translate(0,0) rotate(0deg) scale(.7)',opacity:.85},
+      {transform:'translate('+dx+'px,-22px) rotate('+rot+'deg) scale(1)',opacity:0}
+    ],{duration:620,easing:'ease-out'});
+    setTimeout(function(){n.remove();},620);
+  });
+})();
+</script>
+</body>
+</html>
